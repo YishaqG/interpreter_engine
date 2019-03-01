@@ -1,0 +1,26 @@
+@tokens
+2 id 1
+4 entero 1
+6 caracter 0
+7 suma 0
+8 resta 0
+9 mult 0
+10 div 0
+12 menor 1
+13 menor_igual 0
+15 mayor 1
+16 mayor_igual 0
+18 asigna 1
+19 igual_a 0
+21 diferente 0
+22 parentesis_a 0
+23 parentesis_c 0
+24 corchete_a 0
+25 corchete_c 0
+26 llave_a 0
+27 llave_c 0
+28 coma 0
+29 punto_coma 0
+30 punto 0
+@reserved_words
+PROGRAMA CONSTANTES ARREGLOS INICIO SI ENTONCES NOSI PARA HASTA PASO HACER FIN MOD

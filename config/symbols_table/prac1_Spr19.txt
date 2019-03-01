@@ -1,0 +1,20 @@
+@tokens
+2 id 1
+4 entero 1
+5 parentesis_a 0
+6 parentesis_c 0
+7 coma 0
+
+@reserved_words
+PROGRAMA INICIO FIN
+
+@data_types
+entero id
+
+@functions
+DibujarCara entero entero entero id id
+CambiarModo id id
+EliminarCara id
+Dormir entero
+
+@constants

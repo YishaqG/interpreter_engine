@@ -1,0 +1,32 @@
+@tokens
+2 id 1
+4 entero 1
+5 comilla 0
+6 mas 0
+7 menos 0
+8 multi 0
+9 div 0
+11 menor 1
+12 menor_igual 0
+14 mayor 1
+15 mayor_igual 0
+17 asigna 1
+18 igual 0
+20 diferente 0
+21 parentesis_a 0
+22 parentesis_c 0
+23 corchete_a 0
+24 corchete_c 0
+25 llave_a 0
+26 llave_c 0
+27 coma 0
+28 punto_coma 0
+29 punto 0
+@reserved_words
+INICIO FIN CONSTANTES ARREGLOS PROGRAMA HACER ENTONCES SI NOSI PARA HASTA PASO MIENTRAS MOD and or not
+@data_types
+entero caracter apuntador
+@functions
+escribe apuntador
+lee apuntador
+@constants

@@ -1,0 +1,5 @@
+PROGRAMA caritas
+INICIO
+DibujarCara(500,500,50,Sandra,feliz)
+FIN
+
