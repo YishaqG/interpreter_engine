@@ -41,7 +41,7 @@ def grammar():
 def valueType(self):
     value = self.token
     self.match( ['entero', 'caracter'] )
-    return {'type':self.token['type'], 'value':self.token['lexeme']}
+    return {'type':value['type'], 'value':value['lexeme']}
 
 def typeId(self):
     if(self.token['type'] in ['entero', 'caracter']):
@@ -189,8 +189,8 @@ def arrayElement(self):
     return value
 
 def moreArrayElement(self):
+    self.match('coma')
     if(self.token['type'] in ['entero', 'caracter']):
-        self.match('coma')
         return self.arrayElement()
 
 def moreArray(self):
