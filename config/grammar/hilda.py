@@ -49,9 +49,9 @@ def typeId(self):
     elif(self.token['type'] == 'id'):
         id = self.token
         self.match('id')
-        value = self.variableOperation(id)
+        value = self.variableOperation( id )
         if(value is None):
-            value = self.semantic.getVarValue( id )
+            value = self.semantic.getVarValue( id['lexeme'] )
 
     return value
 
@@ -65,13 +65,13 @@ def method(self, id):
     self.match('punto')
     method = self.token
     self.match('id')
-    value = self.semantic.getVarValue( {'id':id, 'method':method} )
+    value = self.semantic.getVarValue( {'id':id['lexeme'], 'method':method} )
     return {'id':id, 'value':value}
 
 def arrayAccess(self, id):
     self.match('corchete_a')
     index = self.expression()
-    value = self.semantic.getVarValue( {'id':id, 'index':index} )
+    value = self.semantic.getVarValue( {'id':id['lexeme'], 'index':index} )
     self.match('corchete_c')
     return {'id':id, 'index':index, 'value':value}
 

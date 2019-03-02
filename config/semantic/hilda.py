@@ -10,7 +10,8 @@ def resolveTypeValue(self, token):
 
 def getVarValue(self, var_path):
     self.logger.info("getVarValue")
-    const_var = self.symbols_table.getCONST( var_path['id'] )
+    self.logger.debug(str(var_path))
+    const_var = self.symbols_table.getConst( var_path['id'] )
     if(const_var is not None):
         return const_var
 
@@ -113,8 +114,8 @@ def shapeArray(self, array):
     return [type, final_array]
 
 def constDef(self, var_def):
-    if( self.symbols_table.getCONST( var_def['id'] ) is None ):
-        self.symbols_table.addCONST(
+    if( self.symbols_table.getConst( var_def['id'] ) is None ):
+        self.symbols_table.addConst(
             var_def['id'],
             var_def['value']['type'],
             var_def['value']['value']
@@ -124,7 +125,7 @@ def constDef(self, var_def):
         self.error(error_msg)
 
 def assigment(self, assigment):
-    if(selg.symbols_table.getCONST(assigment['var_access']['id']) is not None):
+    if(selg.symbols_table.getConst(assigment['var_access']['id']) is not None):
         error_msg = "Unmutable variable: {0}".format( assigment['var_access']['id'] )
         self.error( error_msg )
 
