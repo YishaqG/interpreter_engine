@@ -11,8 +11,8 @@ class MenuBar(tk.Menu):
     def setUp(self, CONFIG):
         self.file = File()
         self._setUp_File()
-        language = self._setUp_Interpreter(self.file, CONFIG)
-        self._setUp_Run(language)
+        self._setUp_Interpreter(CONFIG)
+        self._setUp_Run()
 
     def _setUp_File(self):
         menu = tk.Menu(self, tearoff=0)
@@ -20,30 +20,30 @@ class MenuBar(tk.Menu):
 
         self.add_cascade(label="File", menu=menu)
 
-    def _setUp_Interpreter(self, source_code, CONFIG):
-        interpreter = Interpreter(source_code, CONFIG)
+    def _setUp_Interpreter(self, CONFIG):
+        self.interpreter = Interpreter(self.file, CONFIG)
 
         menu = tk.Menu(self, tearoff=0)
-        menu.add_command(label="Select", command=interpreter.loadLenguage)
+        menu.add_command(label="Select", command=self.interpreter.loadLenguage)
 
         menu.add_separator()
 
         submenu = tk.Menu(self, tearoff=0)
-        submenu.add_command(label="Automata", command=interpreter.loadAutomata)
-        submenu.add_command(label="Symbols Table", command=interpreter.loadSymbolsTable)
-        submenu.add_command(label="Grammar", command=interpreter.loadGrammar)
-        submenu.add_command(label="Semantic", command=interpreter.loadSemantic)
+        submenu.add_command(label="Automata", command=self.interpreter.loadAutomata)
+        submenu.add_command(label="Symbols Table", command=self.interpreter.loadSymbolsTable)
+        submenu.add_command(label="Grammar", command=self.interpreter.loadGrammar)
+        submenu.add_command(label="Semantic", command=self.interpreter.loadSemantic)
         menu.add_cascade(label="Configurate", menu=submenu)
 
         self.add_cascade(label="Interpreter", menu=menu)
         return interpreter
 
-    def _setUp_Run(self, language):
+    def _setUp_Run(self):
         menu = tk.Menu(self, tearoff=0)
-        menu.add_command(label="Interpreter", command=language.runInterpreter)
+        menu.add_command(label="Interpreter", command=self.interpreter.runInterpreter)
         menu.add_separator()
-        menu.add_command(label="Lexer Analizer", command=language.runLexer)
-        menu.add_command(label="Sintactic Analizer", command=language.runSintactic)
+        menu.add_command(label="Lexer Analizer", command=self.interpreter.runLexer)
+        menu.add_command(label="Sintactic Analizer", command=self.interpreter.runSintactic)
         self.add_cascade(label="Run", menu=menu)
 
 class File():

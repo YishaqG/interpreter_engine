@@ -1,11 +1,12 @@
-from enum import Enum
+import logging
 from . import configData
 
 class SymbolsTable(object):
 
-    _slots_ = ['table']
+    _slots_ = ['table', 'logger']
 
     def __init__(self, data):
+        self.logger = logging.getLogger('SymbolsTable')
         self.table = {}
 
         self.table[ 'tokens' ] = {}
@@ -42,6 +43,8 @@ class SymbolsTable(object):
     def getToken(self, to_get):
         raw_token = self.table['tokens'][to_get]
         token = {'name':raw_token[0], 'recoil':raw_token[1]}
+
+        self.logger.debug("Found token:\t"+str(token))
         return token
 #0_Tokens
 
@@ -76,11 +79,14 @@ class SymbolsTable(object):
 #0_Functions
 
 #1_Identifiers
-    def addId(self, type, name, value):
+    def addId(self, name, type, value):
         """
             Isn't necessary check for the existence of the ID since if exist
             its value is modified and if not the variable is created
         """
+        msg = f"Indexing token <{name}> "
+        msg += f"of type <{type}> and value <{value}>"
+        self.logger.debug(msg)
         self.table['identifiers'][name] = {'type':type, 'value':value}
 
     def getId(self, name):

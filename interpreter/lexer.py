@@ -64,6 +64,7 @@ class Lexer(object):
             error_msg += str(e)
             self.error(error_msg)
 
+        self.logger.debug("Obtained token:\t"+ str(result))
         return self._classify(result)
 
     def _nextLexeme(self):
@@ -73,6 +74,8 @@ class Lexer(object):
         current_char = self.source.nextChar()
         evaluation = self.automata.evaluate( current_char.lower() )
         lexeme = current_char
+        self.logger.debug("Evaluation result:\t"+ str(evaluation))
+        self.logger.debug("Current lexeme:\t"+ lexeme)
 
         if( evaluation is None ): # No final state
             while( True ):
