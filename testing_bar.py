@@ -11,13 +11,19 @@ def setUp_Logger(log_level):
     logging.basicConfig(level=log_level,
                         format='%(name)s:%(levelname)s: %(message)s')
 
+def getLoggingLevel():
+    if(sys.argv[1] in ['--debug', '-d']):
+        return logging.DEBUG
+    else:
+        return logging.INFO
+
 def getConfig():
     with open('config.json', 'r') as f:
         config = json.load(f)
     return config
 
 if __name__ == "__main__":
-    setUp_Logger(logging.DEBUG)
+    setUp_Logger( getLoggingLevel() )
     logger = logging.getLogger('testingBar')
     CONFIG = getConfig()
     logger.info('Interpreter configuration:\n' + str(CONFIG) )
