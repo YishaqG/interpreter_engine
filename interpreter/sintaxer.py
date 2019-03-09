@@ -22,7 +22,7 @@ class Sintaxer(object):
         print(error_msg)
         raise SyntacticError()
 
-    def match(self, expected):
+    def match(self, expected, dry=False):
         """
             Consume the current token if it matches the expected one
             There are 3 variants of the expected token:
@@ -44,9 +44,21 @@ class Sintaxer(object):
             condition = (expected == self.token['type'])
 
         if( condition ):
-            self.nextToken()
+            if( not dry):
+                self.nextToken()
         else:
             self.error(expected)
+
+
+
+    def gotoNextToken(self, to):
+        while( True ):
+            condition = (to[0] == self.token['type'])
+            condition = condition and (to[1] == self.token['lexeme'])
+            if( condition ):
+                break
+            else:
+                self.nextToken()
 
     def setGrammar(self, path):
         self.logger.info("Loading grammar...")

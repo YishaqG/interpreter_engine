@@ -1,5 +1,6 @@
 def grammar():
     return [
+        'matchClosingTag',
         'valueType',
         'typeId',
         'variableOperation',
@@ -38,6 +39,27 @@ def grammar():
         'mientras'
     ]
 
+def matchClosingTag(self):
+    self.logger.debug("Searching for closing tag...")
+    self.logger.debug("Starting at token:\t"+str(self.token))
+    open = 1
+    while( open != 0 ):
+        if( self.token['lexeme']  in ['SI', 'PARA', 'MIENTRAS'] ):
+            open += 1
+        elif( self.token['lexeme']  == 'FIN' ):
+            open -= 1
+            break
+
+        try:
+            self.nextToken()
+        except EndOfFileException as ex:
+            error_msg = "Mismatching closing reserved word,"
+            error_msg += " <FIN> not found."
+            self.error(error_msg)
+
+    self.logger.debug("Ended search for closing tag...")
+
+
 def valueType(self):
     value = self.token
     self.match( ['entero', 'caracter'] )
@@ -46,12 +68,15 @@ def valueType(self):
 def typeId(self):
     if(self.token['type'] in ['entero', 'caracter']):
         value = self.valueType()
+        self.logger.debug("Getted type:\t"+str(value))
     elif(self.token['type'] == 'id'):
         id = self.token
         self.match('id')
         value = self.variableOperation( id )
         if(value is None):
-            value = self.semantic.getVarValue( id['lexeme'] )
+            value = self.semantic.getVarValue( {'id':id['lexeme']} )
+            value = {'id':id, 'value':value}
+        self.logger.debug("Getted id and value:\t"+str(value))
 
     return value
 
@@ -76,16 +101,22 @@ def arrayAccess(self, id):
     return {'id':id, 'index':index, 'value':value}
 
 def expression(self):
-    expr = [self.typeId()]
+    right = self.typeId()
+    right = right['value'] if 'id' in right else right
     complement = self.complement()
     if(complement is not None):
-        expr.extend( complement )
-        expr[0] = self.semantic.solveExpr( {'right':expr[0], 'operator':expr[1],'left':expr[2]} )
-    return expr[0]
+        complement['right'] = right
+        result = self.semantic.solveExpr( complement )
+    else:
+        result = right
+    return result
 
 def complement(self):
     if(self.token['type'] in ['mas', 'menos', 'mult', 'div'] or self.token['lexeme'] == 'MOD'):
-        return [self.aritmeticOperator(), self.typeId()]
+        operation = self.aritmeticOperator()
+        left = self.typeId()
+        left = left['value'] if 'id' in left else left
+        return {'operator':operation, 'left':left}
 
 def aritmeticOperator(self):
     operator = self.token
@@ -218,6 +249,7 @@ def body(self, errase_created_vars=True):
 def instruction(self, errase_created_vars):
     if(self.token['type'] == 'function'):
         self.functionCall()
+        self.match('punto_coma')
     elif(self.token['type'] == 'reserved_word'):
         if(self.token['lexeme'] == 'SI'):
             return self.si(errase_created_vars)
@@ -226,7 +258,9 @@ def instruction(self, errase_created_vars):
         elif(self.token['lexeme'] == 'MIENTRAS'):
             self.mientras()
     elif(self.token['type'] == 'id'):
-        return self.asignacion()
+        value = self.asignacion()
+        self.match('punto_coma')
+        return value
 
 def moreInstruction(self, errase_created_vars):
     if( self.token['type'] in ['function', 'id'] or self.token['lexeme'] in ['PARA', 'MIENTRAS', 'SI']):
@@ -234,11 +268,11 @@ def moreInstruction(self, errase_created_vars):
 
 def asignacion(self):
     self.logger.debug('Asigmancion')
-    id = self.token
+    token = self.token
     self.match('id')
     self.match('asigna')
     value = self.expression()
-    return self.semantic.assigment( {'id':id, 'value':value} )
+    return self.semantic.assigment( {'id':token['lexeme'], 'value':{'type':'entero', 'value':value}} )
 
 def functionCall(self):
     func_call = {}
@@ -295,26 +329,40 @@ def para(self):
     para['ctrl_var'] = self.ctrlVariable()
     self.match( ('reserved_word', 'HASTA') )
     para['to'] = self.typeId()
+    print( para['to'] )
     self.match( ('reserved_word', 'PASO') )
     para['step'] = self.stepType()
-    self.match( ('reserved_word', 'HACER') )
-    self.logger.debug(para)
+    self.match( ('reserved_word', 'HACER'), dry=True )
 
-    body_start = {'row':self.source.getRowIndex(), 'column':self.source.getColumIndex()}
+    self.logger.debug("Para prototype:\t"+str(para))
+
+    body_start = {
+                    'row':self.lexer.source.getRowIndex(),
+                    'column':self.lexer.source.getColumIndex()
+                }
     var_debt, para = self.semantic.paraInit(para)
     were_vars_created = None
-    while( self.semantic.paraIter(para) ):
-        self.source.setCoordinates(body_start['row'], body_start['column'])
-        if(were_vars_created is None):
-            were_vars_created = self.body(errase_created_vars=False)
+    while( True ):
+        if( self.semantic.paraIter(para) ):
+            self.logger.debug("Jumping to:"+str(body_start['row'])+','+str(body_start['column']))
+            self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
+            if(were_vars_created is None):
+                were_vars_created = self.body(errase_created_vars=False)
+            else:
+                self.body(errase_created_vars=False)
         else:
-            self.body()
+            self.matchClosingTag( )
+            break
 
-    self.symbols_table.popVar( created_vars+var_debt )
+    if( were_vars_created is not None ):
+        var_debt += were_vars_created
+    self.symbols_table.popVar( var_debt )
+    print( self.lexer.source.getCoordinates() )
     self.match( ('reserved_word', 'FIN') )
+    self.logger.debug("Ended PARA:\t"+str(para))
 
 def ctrlVariable(self):
-    ctrl_var = {'id':self.token}
+    ctrl_var = {'id':self.token['lexeme']}
     self.match('id')
     value = self.ctrlAssigment()
     if(value is not None):
@@ -345,8 +393,8 @@ def mientras(self):
     self.match( ('reserved_word', 'MIENTRAS') )
     condition = self.conditionalOperation(solve=False)
     self.match( ('reserved_word', 'HACER') )
-    body_start = {'row':self.source.getRowIndex(), 'column':self.source.getColumIndex()}
+    body_start = {'row':self.lexer.source.getRowIndex(), 'column':self.lexer.source.getColumIndex()}
     while( self.semantic.resolveCondition(condition) ):
-        self.source.setCoordinates(body_start['row'], body_start['column'])
+        self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
         self.body()
     self.match( ('reserved_word', 'FIN') )

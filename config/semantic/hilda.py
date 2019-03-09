@@ -9,8 +9,7 @@ def resolveTypeValue(self, token):
         self.error(error_msg)
 
 def getVarValue(self, var_path):
-    self.logger.info("getVarValue")
-    self.logger.debug(str(var_path))
+    self.logger.debug("Getting var. Variable patting:\t"+str(var_path))
     const_var = self.symbols_table.getConst( var_path['id'] )
     if(const_var is not None):
         return const_var
@@ -27,12 +26,13 @@ def getVarValue(self, var_path):
         return var
 
 def arrayOperation(self, var_path, var):
+    self.logger.debug("Array operation:\tvar_path:"+str(var_path)+"\tvar:"+str(var))
     array = var['value']['value']
     if('index' in var_path):
         if( var_path['index']['type'] != 'entero' ):
             error_msg = "Index must be >{0}< not <{1}>".format('entero', var_path['index'])
             self.error(error_msg)
-        elif( len(array) >= var_path['index'] ):
+        elif( len(array) >= int(var_path['index']['value']) ):
             return {
                     'type':var['value']['type'],
                     'value':array[ int(var_path['index']['value']) ]
@@ -41,15 +41,15 @@ def arrayOperation(self, var_path, var):
             error_msg = "Index out of bound."
             self.error( error_msg )
     elif('method' in var_path):
-        if(var_path['method'] == 'length'):
+        if(var_path['method']['lexeme'] == 'length'):
             return {'type':'entero', 'value':str(len( array ))}
         else:
             error_msg = "Unknown method: {0}.".format(var_path['method'])
             self.error( error_msg )
 
 def solveExpr(self, expr):
-    self.logger.info(resolveExpr)
-    self.logger.debug(expr)
+    self.logger.debug("Expression to solve:\t"+str(expr))
+
     if( (expr['left']['type'] == 'entero') and (expr['right']['type'] == 'entero') ):
         if(expr['operator']['lexeme'] == 'MOD'):
             return eval(
@@ -73,6 +73,7 @@ def solveExpr(self, expr):
         self.error(error_msg)
 
 def resolveCondition(self, condition):
+    self.logger.debug("Condition to solve:\t"+str(condition))
     if( condition['left']['type'] == condition['right']['type'] ):
         result = eval(
                 condition['left']['value']+
@@ -111,7 +112,7 @@ def shapeArray(self, array):
             self.error(error_msg)
         final_array.append( element['value'] )
 
-    return [type, final_array]
+    return {'type':type, 'value':final_array}
 
 def constDef(self, var_def):
     if( self.symbols_table.getConst( var_def['id'] ) is None ):
@@ -125,16 +126,18 @@ def constDef(self, var_def):
         self.error(error_msg)
 
 def assigment(self, assigment):
-    if(selg.symbols_table.getConst(assigment['var_access']['id']) is not None):
-        error_msg = "Unmutable variable: {0}".format( assigment['var_access']['id'] )
+    self.logger.debug("Assigmente construction:\t"+str(assigment))
+    if(self.symbols_table.getConst(assigment['id']) is not None):
+        error_msg = "Unmutable variable: {0}".format( assigment['id'] )
         self.error( error_msg )
 
-    if( selg.symbols_table.getId(assigment['id'])['type'] == 'array' ):
+    var_found = self.symbols_table.getId(assigment['id'])
+    if( (var_found is not None) and (var_found['type'] == 'array') ):
         error_msg = "Unable to perform assigment over >arreglo<."
         self.error(error_msg)
 
     exist = False
-    if(self.symbols_table.getId(assigment['var_access']['id']) is not None):
+    if(self.symbols_table.getId(assigment['id']) is not None):
         exist = True
 
     self.symbols_table.addId(
@@ -146,10 +149,10 @@ def assigment(self, assigment):
     return 1 if exist else 0
 
 def paraInit(self, para):
-    para['ctrl_var']
+    self.logger.debug("Initing... Para:\t"+str(para))
     exist = 0
     if( 'value' in para['ctrl_var'] ):
-        if( para['ctrl_var']['type'] == 'entero'):
+        if( para['ctrl_var']['value']['type'] == 'entero'):
             exist = self.assigment( para['ctrl_var'] )
         else:
             error_msg = "Ctrl variable most be type >entero<. Not: {0}".format(para['ctrl_var'])
@@ -157,26 +160,28 @@ def paraInit(self, para):
 
     para['ctrl_var'] = {'id':para['ctrl_var']['id']}
 
-    if( para['to']['type'] != 'entero' ):
+    if( para['to']['value']['type'] != 'entero' ):
         error_msg = "Limit variable most be type >entero<. Not: {0}".format(para['to'])
         self.error(error_msg)
-    para['to'] = para['to']['value']
+    para['to'] = para['to']['value']['value']
 
-    para['step'] = para['step']['type']+para['step']['value']
+    para['step'] = para['step']['type']+para['step']['value']['value']
 
     return exist, para
 
 def paraIter(self, para):
+    self.logger.debug("Iterating... Para:\t"+str(para))
     var = self.symbols_table.getId( para['ctrl_var']['id'] )
+    self.logger.debug("Variable to update:\t"+str(var))
 
-    var['value']['value'] = str( eval(var['value']['value']+' + '+para['step']) )
+    var['value'] = str( eval(var['value']+' + '+para['step']) )
     self.symbols_table.addId(
-            var['id'],
-            var['value']['type'],
-            var['value']['value']
+            para['ctrl_var']['id'],
+            var['type'],
+            var['value']
         )
 
-    if( int(var['value']['value']) <= int(para['to']) ):
+    if( int(var['value']) <= int(para['to']) ):
         return True
     else:
         return False

@@ -122,7 +122,6 @@ class Lexer(object):
 
         return current_char
 
-
     def _classify(self, data):
         tuple = None
         self.logger.info("Classifying lexeme...")

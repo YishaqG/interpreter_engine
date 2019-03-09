@@ -37,23 +37,29 @@ class Interpreter(object):
         self.sintaxer.setGrammar( self.CONFIG['grammar'] )
         self.semantic.setSemantic( self.CONFIG['semantic'] )
 
-    def reloadSyms(self, symbols_table):
-        r = reader.Reader( symbols_table )
+    def reloadSyms(self, syms_table_descriptor):
+        self.CONFIG['symbols_table'] = syms_table_descriptor
+        r = reader.Reader( syms_table_descriptor )
         self.symbols_table.loadConfigData( r.getData() )
         self.logger.debug(self.symbols_table)
 
-    def reloadAutomata(self, automata):
-        r = reader.Reader( automata )
+    def reloadAutomata(self, automata_descriptor):
+        self.CONFIG['automata'] = automata_descriptor
+        r = reader.Reader( automata_descriptor )
         self.automata.loadConfigData( r.getData() )
         self.logger.debug(self.automata)
 
-    def reloadGrammar(self, grammar):
+    def reloadGrammar(self, grammar_descriptor):
+        self.CONFIG['grammar'] = grammar_descriptor
         self.sintaxer = sintaxer.Sintaxer( self.symbols_table,
                                             self.lexer, self.semantic )
-        self.sintaxer.setGrammar( grammar )
+        self.sintaxer.setGrammar( grammar_descriptor )
 
-    def reloadSemantic(self, semantic):
-        self.semantic.setSemantic( semantic )
+    def reloadSemantic(self, semantic_descriptor):
+        self.CONFIG['semantic'] = semantic_descriptor
+        self.semantic = semantic.Semantic( self.symbols_table )
+        self.semantic.setSemantic( semantic_descriptor )
+        self.sintaxer.semantic = self.semantic
 
     def saveConfig(self):
         with open(self.CONFIG['SAVE_AS'], 'w') as outfile:
@@ -65,6 +71,8 @@ class Interpreter(object):
             self.sintaxer.nextToken()
             self.sintaxer.progStructure()
         except Container.EndOfFileException as ex:
-            self.logger.Info("Analysis ended.")
-
+            pass
+        print("="*120)
+        self.logger.info("Analysis ended.")
+        print("="*120)
         self.resetConfig()

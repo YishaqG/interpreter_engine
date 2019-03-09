@@ -7,6 +7,11 @@ class SymbolsTable(object):
 
     def __init__(self, data):
         self.logger = logging.getLogger('SymbolsTable')
+        self.setUpTable()
+
+        self.loadConfigData(data)
+
+    def setUpTable(self):
         self.table = {}
 
         self.table[ 'tokens' ] = {}
@@ -17,13 +22,12 @@ class SymbolsTable(object):
 
         self.table[ 'identifiers' ] = {}
 
-        self.loadConfigData(data)
-
     def __str__(self):
         return "Symbols Table:\t"+str(self.table)+"\n"
 
     def loadConfigData(self, data):
         configData.validateStructure( ['tokens'], data, '<SymbolsTable>' )
+        self.setUpTable()
 
         self.loadTokens( data[ 'tokens' ] )
         if('reserved_words' in data):

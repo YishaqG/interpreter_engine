@@ -11,7 +11,7 @@ class Container:
         if(row is not None):
             self.row_index = row
 
-        if(colum is not None):
+        if(column is not None):
             self.column_index = column
 
     def getRow(self):
