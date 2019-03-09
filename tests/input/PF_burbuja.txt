@@ -1,12 +1,12 @@
 PROGRAMA burbuja
 ARREGLOS   A={5, 8, 2, 9, 1}
 INICIO
-   PARA i=2 HASTA a.length PASO +1 HACER
-     P= a.length-i;
-PARA j=0 HASTA p PASO +1 HACER
-   		SI (a[j] > a[j+1]) ENTONCES
-      		Aux=a[j];  A[j]=a[j+1];  A[j+1]=aux;
-FIN
-   	FIN
-  FIN
+    PARA i=2 HASTA A.length PASO +1 HACER
+        p= A.length-i;
+        PARA j=0 HASTA p PASO +1 HACER
+   	        SI (A[j] > A[j+1]) ENTONCES
+                Aux=A[j];  A[j]=A[j+1];  A[j+1]=aux;
+            FIN
+   	    FIN
+    FIN
 FIN

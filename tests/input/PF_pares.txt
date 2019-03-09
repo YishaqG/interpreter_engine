@@ -3,26 +3,26 @@ CONSTANTES  num=5
 ARREGLOS
 valores={5, 7, 2, 4, 8}
 INICIO
-   car='1';
-   LEE(car);
-   lim=valores.lenght-1;
-   SI (car=='p') ENTONCES
-	PARA var=lim HASTA 0 PASO -1 HACER
-     		par=valores[var] MOD 2;
-		SI (par!=0) ENTONCES
-			valores[var]=valores[var]+1;
-		FIN
-    FIN
-   NOSI
-SI (car=='i') ENTONCES
-		PARA var=lim HASTA 0 PASO -1 HACER
-     			impar=valores[var] MOD 2;
-			SI (par==0) ENTONCES
-				valores[var]=valores[var]+1;
-			FIN
-		FIN
-	NOSI
-           ESCRIBE('0');
-     FIN
+    car='1';
+    LEE(car);
+    lim=valores.lenght-1;
+    SI (car=='p') ENTONCES
+        PARA var=lim HASTA 0 PASO -1 HACER
+            var=valores[var] MOD 2;
+            SI (par!=0) ENTONCES
+			    valores[var]=valores[var]+1;
+		    FIN
+        FIN
+    NOSI
+        SI (car=='i') ENTONCES
+            PARA var=lim HASTA 0 PASO -1 HACER
+                impar=valores[var] MOD 2;
+			    SI (par==0) ENTONCES
+				    valores[var]=valores[var]+1;
+			    FIN
+		    FIN
+	    NOSI
+            ESCRIBE('0');
+        FIN
    FIN
- FIN
+FIN
