@@ -269,6 +269,8 @@ def moreInstruction(self, errase_created_vars):
     if( self.token['type'] in ['function', 'id'] or self.token['lexeme'] in ['PARA', 'MIENTRAS', 'SI']):
         return self.instruction(errase_created_vars)
 
+    return 0
+
 def asignacion(self):
     self.logger.debug('Asigmancion')
     token = self.token
