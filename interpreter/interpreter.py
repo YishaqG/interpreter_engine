@@ -29,19 +29,13 @@ class Interpreter(object):
 
     def resetConfig(self):
         r = reader.Reader( self.CONFIG['symbols_table'] )
-        self.symbols_table = symbolsTable.SymbolsTable( r.getData() )
-
-        self.lexer.setSymbolsTable(self.symbols_table)
-
-        self.semantic = semantic.Semantic( self.symbols_table )
-        self.sintaxer.setGrammar( self.CONFIG['grammar'] )
-        self.semantic.setSemantic( self.CONFIG['semantic'] )
+        self.symbols_table.loadConfigData( r.getData() )
 
     def reloadSyms(self, syms_table_descriptor):
         self.CONFIG['symbols_table'] = syms_table_descriptor
         r = reader.Reader( syms_table_descriptor )
         self.symbols_table.loadConfigData( r.getData() )
-        self.logger.debug(self.symbols_table)
+        self.logger.debug( self.symbols_table )
 
     def reloadAutomata(self, automata_descriptor):
         self.CONFIG['automata'] = automata_descriptor
@@ -72,7 +66,10 @@ class Interpreter(object):
             self.sintaxer.progStructure()
         except Container.EndOfFileException as ex:
             pass
-        print("="*120)
+        finally:
+            self.logger.debug("Reseting interpreter configuration.")
+            self.resetConfig()
+
+        self.logger.debug("="*80)
         self.logger.info("Analysis ended.")
-        print("="*120)
-        self.resetConfig()
+        self.logger.debug("="*80)

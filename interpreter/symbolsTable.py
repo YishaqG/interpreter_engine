@@ -19,7 +19,6 @@ class SymbolsTable(object):
         self.table[ 'data_types' ] = []
         self.table[ 'functions' ] = {}
         self.table[ 'constants' ] = {}
-
         self.table[ 'identifiers' ] = {}
 
     def __str__(self):
@@ -120,7 +119,7 @@ class SymbolsTable(object):
         if(name in self.table['constants']):
             raise automata.RepeatedValueException()
         else:
-            self.table['constants'][name] = [type, value]
+            self.table['constants'][name] = {'type':type, 'value':value}
 
     def getConst(self, name):
         if(name in self.table['constants']):

@@ -59,7 +59,6 @@ def matchClosingTag(self):
 
     self.logger.debug("Ended search for closing tag...")
 
-
 def valueType(self):
     value = self.token
     self.match( ['entero', 'caracter'] )
@@ -75,16 +74,18 @@ def typeId(self):
         value = self.variableOperation( id )
         if(value is None):
             value = self.semantic.getVarValue( {'id':id['lexeme']} )
-            value = {'id':id, 'value':value}
+            value = {'id':id['lexeme'], 'value':value}
         self.logger.debug("Getted id and value:\t"+str(value))
 
     return value
 
 def variableOperation(self, id):
+    self.logger.debug("Cheking for variable operation.")
     if(self.token['type'] == 'corchete_a'):
         return self.arrayAccess(id)
     elif(self.token['type'] == 'punto'):
         return self.method(id)
+    self.logger.debug("There's no variable operation.")
 
 def method(self, id):
     self.match('punto')
@@ -143,9 +144,11 @@ def conditionalOperation(self, solve=True):
         selt.match( ('reserved_word','not') )
         condition['negate'] = True
 
-    condition['left'] = self.typeId()
+    token = self.typeId()
+    condition['left'] = token['value'] if 'value' in token else token
     condition['operator'] = self.conditionalOperator()
-    condition['right'] = self.typeId()
+    token = self.typeId()
+    condition['right'] = token['value'] if 'value' in token else token
 
     if( solve ):
         return self.semantic.resolveCondition( condition )
@@ -236,10 +239,6 @@ def body(self, errase_created_vars=True):
     if( were_vars_created is not None):
         created_vars += were_vars_created
 
-    were_vars_created = self.moreInstruction( errase_created_vars )
-    if( were_vars_created is not None):
-        created_vars += were_vars_created
-
     if( errase_created_vars ):
         self.symbols_table.popVar(created_vars)
         created_vars = 0
@@ -247,20 +246,24 @@ def body(self, errase_created_vars=True):
     return created_vars
 
 def instruction(self, errase_created_vars):
+    created_vars = 0
     if(self.token['type'] == 'function'):
         self.functionCall()
         self.match('punto_coma')
     elif(self.token['type'] == 'reserved_word'):
         if(self.token['lexeme'] == 'SI'):
-            return self.si(errase_created_vars)
+            created_vars = self.si(errase_created_vars)
         elif(self.token['lexeme'] == 'PARA'):
             self.para()
         elif(self.token['lexeme'] == 'MIENTRAS'):
             self.mientras()
     elif(self.token['type'] == 'id'):
-        value = self.asignacion()
+        created_vars = self.asignacion()
         self.match('punto_coma')
-        return value
+    else:
+        self.error("Unknown instruction:\t"+str(self.token['lexeme']))
+
+    return created_vars+self.moreInstruction(errase_created_vars)
 
 def moreInstruction(self, errase_created_vars):
     if( self.token['type'] in ['function', 'id'] or self.token['lexeme'] in ['PARA', 'MIENTRAS', 'SI']):
@@ -272,22 +275,22 @@ def asignacion(self):
     self.match('id')
     self.match('asigna')
     value = self.expression()
-    return self.semantic.assigment( {'id':token['lexeme'], 'value':{'type':'entero', 'value':value}} )
+    return self.semantic.assigment( {'id':token['lexeme'], 'value':value} )
 
 def functionCall(self):
     func_call = {}
     self.logger.info('Calling function')
 
-    func_call['type'] = self.token['type']
     func_call['name'] = self.token['lexeme']
     self.match('function')
 
-    self.match('parentesis_a')
+    self.match( 'parentesis_a' )
     func_call['parameters'] = self.parameter()
-    self.match('parentesis_c')
+    self.match( 'parentesis_c' )
 
-    self.logger.debug(func_call)
-    self.semantic.analyze(func_call)
+    self.logger.debug( "Function call:"+str(func_call) )
+    if( not self.semantic.buildInFunctions( func_call ) ):
+        self.semantic.analyze( func_call )
 
 def parameter(self):
     parameters = []
@@ -308,7 +311,7 @@ def si(self, errase_created_vars):
     self.match( 'parentesis_a' )
     condition = self.conditionalOperation()
     self.match( 'parentesis_c' )
-    self.match( ('reserved_word', 'HACER') )
+    self.match( ('reserved_word', 'ENTONCES') )
     if( condition ):
         created_vars = self.body( errase_created_vars )
     else:
@@ -329,7 +332,7 @@ def para(self):
     para['ctrl_var'] = self.ctrlVariable()
     self.match( ('reserved_word', 'HASTA') )
     para['to'] = self.typeId()
-    print( para['to'] )
+    self.logger.debug("Para[HASTA]:\t"+str(para['to']) )
     self.match( ('reserved_word', 'PASO') )
     para['step'] = self.stepType()
     self.match( ('reserved_word', 'HACER'), dry=True )
@@ -357,7 +360,7 @@ def para(self):
     if( were_vars_created is not None ):
         var_debt += were_vars_created
     self.symbols_table.popVar( var_debt )
-    print( self.lexer.source.getCoordinates() )
+    self.logger.debug( "Current source coordinates:\t"+self.lexer.source.getCoordinates() )
     self.match( ('reserved_word', 'FIN') )
     self.logger.debug("Ended PARA:\t"+str(para))
 

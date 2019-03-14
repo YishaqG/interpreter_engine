@@ -77,6 +77,11 @@ class Lexer(object):
         self.logger.debug("Evaluation result:\t"+ str(evaluation))
         self.logger.debug("Current lexeme:\t"+ lexeme)
 
+        if(current_char == "'"):
+            self.logger.debug("Getting: caracter.")
+            lexeme = self.getCharacter()
+            evaluation = 'caracter'
+
         if( evaluation is None ): # No final state
             while( True ):
                 current_char = self.source.nextChar()
@@ -85,9 +90,6 @@ class Lexer(object):
                 if( current_char.isspace() ):
                     evaluation = self.automata.evaluate( None )
                     break
-                elif(current_char == '\''):
-                    lexeme = self.getCharacter()
-                    evaluation = 'caracter'
 
                 try:
                     evaluation = self.automata.evaluate( current_char.lower() )

@@ -1,4 +1,5 @@
-import logging, importlib, re, types, sys
+import logging, re, types, sys
+from importlib import util
 from interpreter.Container import EndOfFileException
 from pathlib import Path
 
@@ -64,8 +65,8 @@ class Sintaxer(object):
         self.logger.info("Loading grammar...")
         try:
             path = Path(path).resolve()
-            spec = importlib.util.spec_from_file_location(path.name, path)
-            module = importlib.util.module_from_spec(spec)
+            spec = util.spec_from_file_location(path.name, path)
+            module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
         except Exception as ex:
             self.logger.error( str(ex) )

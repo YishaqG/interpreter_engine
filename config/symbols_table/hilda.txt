@@ -25,8 +25,8 @@
 @reserved_words
 INICIO FIN CONSTANTES ARREGLOS PROGRAMA HACER ENTONCES SI NOSI PARA HASTA PASO MIENTRAS MOD and or not
 @data_types
-entero caracter apuntador
+entero caracter any
 @functions
-escribe apuntador
-lee apuntador
+escribe any
+lee any
 @constants

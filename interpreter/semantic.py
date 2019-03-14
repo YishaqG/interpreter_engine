@@ -1,4 +1,5 @@
-import logging, importlib, re, types, sys, functools
+import logging, re, types, sys, functools
+from importlib import util
 from pathlib import Path
 
 def semantic_status(func, *, disable=False):
@@ -30,8 +31,8 @@ class Semantic:
         try:
             path = Path(path).resolve()
             self.source = path
-            spec = importlib.util.spec_from_file_location(path.name, path)
-            module = importlib.util.module_from_spec(spec)
+            spec = util.spec_from_file_location(path.name, path)
+            module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
         except Exception as ex:
             self.logger.error( str(ex) )
@@ -66,8 +67,8 @@ class Semantic:
         self.logger.info("Initializing engine...")
         try:
             path = Path(self.source).resolve()
-            spec = importlib.util.spec_from_file_location(path.name, path)
-            module = importlib.util.module_from_spec(spec)
+            spec = util.spec_from_file_location(path.name, path)
+            module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
         except Exception as ex:
             self.logger.error(str(ex))

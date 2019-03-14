@@ -1,3 +1,50 @@
+def buildInFunctions(self, function):
+    if( function['name'].lower() == 'escribe' ):
+        if( len(function['parameters']) == 1 ):
+            to_print = function['parameters'][0]
+            to_print = to_print if not 'id' in to_print else to_print['value']
+            print( to_print['value'] )
+        else:
+            error_msg = f"Expected 1 parameter found:\t{len(function['parameters'])}"
+            self.error( error_msg )
+    elif( function['name'].lower() == 'lee' ):
+        if( (len(function['parameters']) > 1) and not ('id' in function['parameters'][0]) ):
+            error_msg = "Invalid calling to functions <lee>."
+            self.error( error_msg )
+
+        const_var = self.symbols_table.getConst( function['parameters'][0]['id'] )
+        if(const_var is not None):
+            error_msg = f"Can't perform operation over unmutable variable:\t"
+            error_msg += f"{function['parameters'][0]['id']}"
+            self.error( error_msg )
+
+        var = self.symbols_table.getId( function['parameters'][0]['id'] )
+        # Since >const_var< was None it's only necessary check for >var<
+        if( var is None ):
+            error_msg = f"No previous declaration of variable: {function['parameters'][0]['id']}."
+            self.error( error_msg )
+
+        value = input()
+        if( value.isdecimal() ):
+            value = {'type':'entero', 'value': str(value)}
+        elif( value.isalpha() ):
+            if( len(value) == 1):
+                value = {'type':'caracter', 'value': str(value)}
+            else:
+                self.error("<Cadenas> are't supported.")
+        else:
+            error_msg = f"Unknown type:\t{value}."
+            self.error( error_msg )
+
+        self.assigment({
+                'id': function['parameters'][0]['id'],
+                'value': value
+            })
+    else:
+        return False
+
+    return True
+
 def resolveTypeValue(self, token):
     self.logger.info('resolveTypeValue')
     if(token['type'] == 'entero'):
@@ -132,13 +179,15 @@ def assigment(self, assigment):
         self.error( error_msg )
 
     var_found = self.symbols_table.getId(assigment['id'])
-    if( (var_found is not None) and (var_found['type'] == 'array') ):
-        error_msg = "Unable to perform assigment over >arreglo<."
-        self.error(error_msg)
-
-    exist = False
-    if(self.symbols_table.getId(assigment['id']) is not None):
-        exist = True
+    if( var_found is not None ):
+        if( var_found['type'] == 'array' ):
+            error_msg = "Unable to perform assigment over >arreglo<."
+            self.error( error_msg )
+        elif( assigment['value']['type'] != var_found['type'] ):
+            error_msg = f"Mismatch of variable type with assigmente value."
+            error_msg += f"Variable type {var_found['type']} and"
+            error_msg += f" assigment value of tye {assigment['value']['type']}."
+            self.error( error_msg )
 
     self.symbols_table.addId(
             assigment['id'],
@@ -146,7 +195,7 @@ def assigment(self, assigment):
             assigment['value']['value']
         )
 
-    return 1 if exist else 0
+    return 1 if var_found else 0
 
 def paraInit(self, para):
     self.logger.debug("Initing... Para:\t"+str(para))
@@ -187,7 +236,14 @@ def paraIter(self, para):
         return False
 
 class BuiltInFunctions:
-    pass
+    def __init__(self):
+        pass
+
+    def escribir(self, text):
+        print( text )
+
+    def leer(self, var):
+        temp = raw_input()
 
 def init():
     pass
@@ -195,6 +251,7 @@ def init():
 def semantic():
     return [
                 'resolveTypeValue',
+                'buildInFunctions',
                 'getVarValue',
                 'arrayOperation',
                 'solveExpr',
