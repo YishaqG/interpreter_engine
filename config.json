@@ -1,13 +1,19 @@
 {
-    "PATH": "/media/yishaq/Bodega/Uni/Materias/Oto18/Intro.Compiladores/Practicas/P2/config/",
+    "PATH": "./",
     "SAVE_AS": "config.json",
-    "DEFAULT_LANGUAGE": "proyecto_final",
+    "DEFAULT_LANGUAGE": "hilda",
     "LANGUAGE": {
         "proyecto_final": {
-            "automata": "/home/yishaq/pGinterprete/src/engine/config/automata/prac1_Spr19.txt",
-            "symbols_table": "/home/yishaq/pGinterprete/src/engine/config/symbols_table/prac1_Spr19.txt",
-            "grammar": "/home/yishaq/pGinterprete/src/engine/config/grammar/prac1_Spr19.py",
-            "semantic": "/home/yishaq/pGinterprete/src/engine/config/semantic/prac1_Spr19.py"
+            "automata": "config/automata/prac1_Spr19.txt",
+            "symbols_table": "config/symbols_table/prac1_Spr19.txt",
+            "grammar": "config/grammar/prac1_Spr19.py",
+            "semantic": "config/semantic/prac1_Spr19.py"
+        },
+        "hilda": {
+            "automata": "config/automata/hilda.txt",
+            "symbols_table": "config/symbols_table/hilda.txt",
+            "grammar": "config/grammar/hilda.py",
+            "semantic": "config/semantic/hilda.py"
         }
     }
 }

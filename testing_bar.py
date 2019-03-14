@@ -12,7 +12,7 @@ def setUp_Logger(log_level):
                         format='%(name)s:%(levelname)s: %(message)s')
 
 def getLoggingLevel():
-    if(sys.argv[1] in ['--debug', '-d']):
+    if( (len( sys.argv ) > 1) and (sys.argv[1] in ['--debug', '-d']) ):
         return logging.DEBUG
     else:
         return logging.INFO
