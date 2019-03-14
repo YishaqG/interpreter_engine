@@ -246,7 +246,6 @@ def body(self, errase_created_vars=True):
     return created_vars
 
 def instruction(self, errase_created_vars):
-    created_vars = 0
     if(self.token['type'] == 'function'):
         self.functionCall()
         self.match('punto_coma')
@@ -263,6 +262,7 @@ def instruction(self, errase_created_vars):
     else:
         self.error("Unknown instruction:\t"+str(self.token['lexeme']))
 
+    created_vars = 0 if created_vars is None else created_vars
     return created_vars+self.moreInstruction(errase_created_vars)
 
 def moreInstruction(self, errase_created_vars):
@@ -323,9 +323,11 @@ def si(self, errase_created_vars):
     return created_vars
 
 def sino(self, errase_created_vars):
-    if(self.token['lexeme'] == 'SINO'):
+    if( self.token['lexeme'] == 'SINO' ):
         self.match( ('reserved_word', 'SINO') )
         return self.body(errase_created_vars)
+    else:
+        self.matchClosingTag( )
 
 def para(self):
     self.logger.info('For')
