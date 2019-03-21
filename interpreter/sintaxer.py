@@ -50,8 +50,6 @@ class Sintaxer(object):
         else:
             self.error(expected)
 
-
-
     def gotoNextToken(self, to):
         while( True ):
             condition = (to[0] == self.token['type'])

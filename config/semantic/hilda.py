@@ -223,14 +223,15 @@ def paraIter(self, para):
     var = self.symbols_table.getId( para['ctrl_var']['id'] )
     self.logger.debug("Variable to update:\t"+str(var))
 
-    var['value'] = str( eval(var['value']+' + '+para['step']) )
-    self.symbols_table.addId(
-            para['ctrl_var']['id'],
-            var['type'],
-            var['value']
-        )
-
+    debug_msg = f"<PARA> limit cheking. Current:{var['value']} To:{para['to']}"
+    self.logger.debug(debug_msg)
     if( int(var['value']) <= int(para['to']) ):
+        var['value'] = str( eval(var['value']+' + '+para['step']) )
+        self.symbols_table.addId(
+                para['ctrl_var']['id'],
+                var['type'],
+                var['value']
+            )
         return True
     else:
         return False

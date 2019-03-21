@@ -40,8 +40,8 @@ def grammar():
     ]
 
 def matchClosingTag(self):
-    self.logger.debug("Searching for closing tag...")
-    self.logger.debug("Starting at token:\t"+str(self.token))
+    self.logger.info("Searching for closing tag...")
+    self.logger.info("Starting at token:\t"+str(self.token))
     open = 1
     while( open != 0 ):
         if( self.token['lexeme']  in ['SI', 'PARA', 'MIENTRAS'] ):
@@ -57,7 +57,7 @@ def matchClosingTag(self):
             error_msg += " <FIN> not found."
             self.error(error_msg)
 
-    self.logger.debug("Ended search for closing tag...")
+    self.logger.info("Ended search for closing tag...")
 
 def valueType(self):
     value = self.token
@@ -80,12 +80,12 @@ def typeId(self):
     return value
 
 def variableOperation(self, id):
-    self.logger.debug("Cheking for variable operation.")
+    self.logger.info("Matching for variable operation.")
     if(self.token['type'] == 'corchete_a'):
         return self.arrayAccess(id)
     elif(self.token['type'] == 'punto'):
         return self.method(id)
-    self.logger.debug("There's no variable operation.")
+    self.logger.info("There's no variable operation.")
 
 def method(self, id):
     self.match('punto')
@@ -102,6 +102,7 @@ def arrayAccess(self, id):
     return {'id':id, 'index':index, 'value':value}
 
 def expression(self):
+    self.logger.info("Matching for expression.")
     right = self.typeId()
     right = right['value'] if 'id' in right else right
     complement = self.complement()
@@ -181,7 +182,7 @@ def areThereConst(self):
 
 def defConst(self):
     var_def = {}
-    self.logger.debug('defConst')
+    self.logger.info("Defining constant.")
     var_def['id'] = self.token['lexeme']
     self.match('id')
     self.match('asigna')
@@ -202,7 +203,7 @@ def areThereArray(self):
         self.defArray()
 
 def defArray(self):
-    self.logger.debug('defArray')
+    self.logger.info("Defining array.")
     var_def = {}
     var_def['id'] = self.token['lexeme']
     self.match('id')
@@ -246,6 +247,7 @@ def body(self, errase_created_vars=True):
     return created_vars
 
 def instruction(self, errase_created_vars):
+    created_vars = 0
     if(self.token['type'] == 'function'):
         self.functionCall()
         self.match('punto_coma')
@@ -309,6 +311,7 @@ def moreParameter(self):
         return self.parameter()
 
 def si(self, errase_created_vars):
+    self.logger.info("<SI> call")
     self.match( ('reserved_word', 'SI') )
     self.match( 'parentesis_a' )
     condition = self.conditionalOperation()
@@ -323,14 +326,16 @@ def si(self, errase_created_vars):
     return created_vars
 
 def sino(self, errase_created_vars):
+    self.logger.info("Matching <SINO>")
     if( self.token['lexeme'] == 'SINO' ):
+        self.logger.info("<SINO> call")
         self.match( ('reserved_word', 'SINO') )
         return self.body(errase_created_vars)
     else:
         self.matchClosingTag( )
 
 def para(self):
-    self.logger.info('For')
+    self.logger.info('<PARA> call')
     para = {}
     self.match( ('reserved_word', 'PARA') )
     para['ctrl_var'] = self.ctrlVariable()
@@ -341,7 +346,7 @@ def para(self):
     para['step'] = self.stepType()
     self.match( ('reserved_word', 'HACER'), dry=True )
 
-    self.logger.debug("Para prototype:\t"+str(para))
+    self.logger.debug("<PARA> prototype:\t"+str(para))
 
     body_start = {
                     'row':self.lexer.source.getRowIndex(),
@@ -350,7 +355,9 @@ def para(self):
     var_debt, para = self.semantic.paraInit(para)
     were_vars_created = None
     while( True ):
+        self.logger.info("<PARA> evaluating iteration condition.")
         if( self.semantic.paraIter(para) ):
+            self.logger.info("<PARA> Iteration")
             self.logger.debug("Jumping to:"+str(body_start['row'])+','+str(body_start['column']))
             self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
             if(were_vars_created is None):
@@ -396,12 +403,13 @@ def stepType(self):
     return step
 
 def mientras(self):
-    self.logger.debug('Mientras')
+    self.logger.info("<MIENTRAS> call")
     self.match( ('reserved_word', 'MIENTRAS') )
     condition = self.conditionalOperation(solve=False)
     self.match( ('reserved_word', 'HACER') )
     body_start = {'row':self.lexer.source.getRowIndex(), 'column':self.lexer.source.getColumIndex()}
     while( self.semantic.resolveCondition(condition) ):
+        self.logger.debug("<MIENTRAS> iteration")
         self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
         self.body()
     self.match( ('reserved_word', 'FIN') )
