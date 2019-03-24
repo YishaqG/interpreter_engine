@@ -3,7 +3,6 @@ def buildInFunctions(self, function):
         if( len(function['parameters']) == 1 ):
             to_print = function['parameters'][0]
             to_print = to_print if not 'id' in to_print else to_print['value']
-            print( to_print['value'] )
         else:
             error_msg = f"Expected 1 parameter found:\t{len(function['parameters'])}"
             self.error( error_msg )
@@ -79,13 +78,13 @@ def arrayOperation(self, var_path, var):
         if( var_path['index']['type'] != 'entero' ):
             error_msg = "Index must be >{0}< not <{1}>".format('entero', var_path['index'])
             self.error(error_msg)
-        elif( len(array) >= int(var_path['index']['value']) ):
+        elif( len(array) > int(var_path['index']['value']) ):
             return {
                     'type':var['value']['type'],
                     'value':array[ int(var_path['index']['value']) ]
                     }
         else:
-            error_msg = "Index out of bound."
+            error_msg = f"Index out of bound for array: {var_path['id']}."
             self.error( error_msg )
     elif('method' in var_path):
         if(var_path['method']['lexeme'] == 'length'):
@@ -96,10 +95,11 @@ def arrayOperation(self, var_path, var):
 
 def solveExpr(self, expr):
     self.logger.debug("Expression to solve:\t"+str(expr))
+    result = {'type':expr['left']['type']}
 
     if( (expr['left']['type'] == 'entero') and (expr['right']['type'] == 'entero') ):
         if(expr['operator']['lexeme'] == 'MOD'):
-            return eval(
+            result['value'] =  eval(
                     expr['left']['value']+
                     ' ' +
                     '%'+
@@ -107,7 +107,7 @@ def solveExpr(self, expr):
                     expr['right']['value']
                 )
         else:
-            return eval(
+            result['value'] = eval(
                     expr['left']['value']+
                     ' ' +
                     expr['operator']['lexeme']+
@@ -117,7 +117,14 @@ def solveExpr(self, expr):
     else:
         error_msg = "Both operators most be type >entero<. "
         error_msg += "Given: RIGHT:{0},LEFT:{1}".format(expr['right'], expr['left'])
+        error_msg += f" At line:{expr['line']}"
         self.error(error_msg)
+
+    if( result['value'] < 0 ):
+        error_msg = f"Operation result out of real numbers domain. At line:{expr['line']}"
+        self.error( error_msg )
+
+    return result
 
 def resolveCondition(self, condition):
     self.logger.debug("Condition to solve:\t"+str(condition))
@@ -173,23 +180,24 @@ def constDef(self, var_def):
         self.error(error_msg)
 
 def assigment(self, assigment):
-    self.logger.debug("Assigmente construction:\t"+str(assigment))
+    self.logger.info("Assigmente prototype:\t"+str(assigment))
     if(self.symbols_table.getConst(assigment['id']) is not None):
         error_msg = "Unmutable variable: {0}".format( assigment['id'] )
         self.error( error_msg )
 
     var_found = self.symbols_table.getId(assigment['id'])
     if( var_found is not None ):
-        if( var_found['type'] == 'array' ):
-            error_msg = "Unable to perform assigment over >arreglo<."
-            self.error( error_msg )
-        elif( assigment['value']['type'] != var_found['type'] ):
+        type = var_found['type'] if not var_found['type'] == 'array' else var_found['value']['type']
+        if( assigment['value']['type'] != type ):
             error_msg = f"Mismatch of variable type with assigmente value."
             error_msg += f"Variable type {var_found['type']} and"
             error_msg += f" assigment value of tye {assigment['value']['type']}."
             self.error( error_msg )
 
-    self.symbols_table.addId(
+        if( type == 'array' and 'index' in assigment ):
+                var_found['value']['value'][ int(assigment['index']['value']) ] = assigment['value']['value']
+    else:
+        self.symbols_table.addId(
             assigment['id'],
             assigment['value']['type'],
             assigment['value']['value']
@@ -223,7 +231,7 @@ def paraIter(self, para):
     var = self.symbols_table.getId( para['ctrl_var']['id'] )
     self.logger.debug("Variable to update:\t"+str(var))
 
-    debug_msg = f"<PARA> limit cheking. Current:{var['value']} To:{para['to']}"
+    debug_msg = f"<PARA> limit checking. Current:{var['value']} To:{para['to']}"
     self.logger.debug(debug_msg)
     if( int(var['value']) <= int(para['to']) ):
         var['value'] = str( eval(var['value']+' + '+para['step']) )
@@ -235,16 +243,6 @@ def paraIter(self, para):
         return True
     else:
         return False
-
-class BuiltInFunctions:
-    def __init__(self):
-        pass
-
-    def escribir(self, text):
-        print( text )
-
-    def leer(self, var):
-        temp = raw_input()
 
 def init():
     pass

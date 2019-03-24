@@ -1,10 +1,8 @@
-import logging, json, sys, argparse
-from interpreter import interpreter, Container, semantic
+#!/usr/bin/env python3
 
-import tkinter as tk
-from tkinter.filedialog import *
-from tkinter.messagebox import *
-from views import menuBar
+import logging, json, sys, argparse
+from importlib import util
+from interpreter import interpreter
 
 def setUp_Logger( args ):
     if( args.debug ):
@@ -32,6 +30,9 @@ def setUp_Logger( args ):
 
 def setUp_argparser():
     parser = argparse.ArgumentParser()
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--testing-bar", action='store_true', help="Start the graphical interface")
+    mode.add_argument("-in", "--input", help="File path")
     loggin_lvl = parser.add_mutually_exclusive_group()
     loggin_lvl.add_argument("-d", "--debug", action='store_true', help="Set logging level to: DEBUG")
     loggin_lvl.add_argument("-i", "--info", action='store_true', help="Set logging level to: INFO")
@@ -46,9 +47,12 @@ def getConfig():
         config = json.load(f)
     return config
 
-if __name__ == "__main__":
-    args = setUp_argparser()
-    setUp_Logger( args )
+def testing_bar( CONFIG ):
+    tk = __import__( 'tkinter' )
+    spec = util.spec_from_file_location('menuBar', './views/menuBar.py')
+    menuBar = util.module_from_spec(spec)
+    spec.loader.exec_module(menuBar)
+
     logger = logging.getLogger('testingBar')
     CONFIG = getConfig()
     logger.info('Interpreter configuration:\n' + str(CONFIG) )
@@ -63,3 +67,15 @@ if __name__ == "__main__":
     root.geometry("250x0")
     root.resizable(1, 0)
     root.mainloop()
+
+if __name__ == "__main__":
+    args = setUp_argparser()
+    setUp_Logger( args )
+    CONFIG = getConfig()
+
+    if( args.testing_bar ):
+        testing_bar(CONFIG)
+    else:
+        inter = interpreter.Interpreter( CONFIG['LANGUAGE'][CONFIG['DEFAULT_LANGUAGE']] )
+        with open( args.input, 'r' ) as f:
+            inter.run( f.read() )

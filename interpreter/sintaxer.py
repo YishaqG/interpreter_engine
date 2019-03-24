@@ -14,7 +14,6 @@ class Sintaxer(object):
 
     def nextToken(self):
         self.token = self.lexer.nextToken()
-        self.logger.debug("Current token:\t" + str(self.token))
 
     def error(self, expected):
         error_msg = "Sintaxer:ERROR:"
@@ -45,8 +44,10 @@ class Sintaxer(object):
             condition = (expected == self.token['type'])
 
         if( condition ):
+            previous_token = self.token
             if( not dry):
                 self.nextToken()
+            return previous_token
         else:
             self.error(expected)
 

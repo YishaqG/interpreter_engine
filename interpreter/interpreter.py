@@ -65,7 +65,7 @@ class Interpreter(object):
             self.sintaxer.nextToken()
             self.sintaxer.progStructure()
         except Container.EndOfFileException as ex:
-            pass
+            self.logger.debug("End of file.")
         finally:
             self.logger.debug("Reseting interpreter configuration.")
             self.resetConfig()

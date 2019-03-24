@@ -27,6 +27,7 @@ def grammar():
         'instruction',
         'moreInstruction',
         'asignacion',
+        'thereIsArrayAssigment',
         'functionCall',
         'parameter',
         'moreParameter',
@@ -43,12 +44,13 @@ def matchClosingTag(self):
     self.logger.info("Searching for closing tag...")
     self.logger.info("Starting at token:\t"+str(self.token))
     open = 1
-    while( open != 0 ):
+    while( True ):
         if( self.token['lexeme']  in ['SI', 'PARA', 'MIENTRAS'] ):
             open += 1
         elif( self.token['lexeme']  == 'FIN' ):
             open -= 1
-            break
+            if( open == 0 ):
+                break
 
         try:
             self.nextToken()
@@ -115,10 +117,11 @@ def expression(self):
 
 def complement(self):
     if(self.token['type'] in ['mas', 'menos', 'mult', 'div'] or self.token['lexeme'] == 'MOD'):
+        line = self.token['line']
         operation = self.aritmeticOperator()
         left = self.typeId()
         left = left['value'] if 'id' in left else left
-        return {'operator':operation, 'left':left}
+        return {'operator':operation, 'left':left, 'line':line}
 
 def aritmeticOperator(self):
     operator = self.token
@@ -168,6 +171,7 @@ def progStructure(self):
     self.areThereArray()
     self.match( ('reserved_word', 'INICIO') )
     self.body()
+    print('\n'+str(self.symbols_table.table)+'\n')
     self.match( ('reserved_word', 'FIN') )
 
 def name(self):
@@ -234,19 +238,20 @@ def moreArray(self):
 #0_ARREGLO
 
 def body(self, errase_created_vars=True):
-    created_vars = 0
+    self.logger.info("Body...")
 
-    were_vars_created = self.instruction( errase_created_vars )
-    if( were_vars_created is not None):
-        created_vars += were_vars_created
+    created_vars = self.instruction( errase_created_vars )
 
     if( errase_created_vars ):
         self.symbols_table.popVar(created_vars)
         created_vars = 0
 
+    self.logger.info("Body end. Created variables: "+str(created_vars))
     return created_vars
 
 def instruction(self, errase_created_vars):
+    self.logger.info("Instruction checking...")
+
     created_vars = 0
     if(self.token['type'] == 'function'):
         self.functionCall()
@@ -258,12 +263,18 @@ def instruction(self, errase_created_vars):
             self.para()
         elif(self.token['lexeme'] == 'MIENTRAS'):
             self.mientras()
+        else:
+            error_msg = "Expecting one of the next reserved word: SI, PARA or MIENTRAS"
+            error_msg += f" Found: {self.token['lexeme']}"
+            self.error( error_msg )
     elif(self.token['type'] == 'id'):
         created_vars = self.asignacion()
         self.match('punto_coma')
     else:
         self.error("Unknown instruction:\t"+str(self.token['lexeme']))
 
+
+    self.logger.info("Instruction checking ended...")
     created_vars = 0 if created_vars is None else created_vars
     return created_vars+self.moreInstruction(errase_created_vars)
 
@@ -274,12 +285,23 @@ def moreInstruction(self, errase_created_vars):
     return 0
 
 def asignacion(self):
-    self.logger.debug('Asigmancion')
-    token = self.token
-    self.match('id')
+    assigment_prototype = {}
+    self.logger.debug('Asigmancion...')
+    token = self.match('id')
+    assigment_prototype['id'] = token['lexeme']
+    array = self.thereIsArrayAssigment( token )
     self.match('asigna')
-    value = self.expression()
-    return self.semantic.assigment( {'id':token['lexeme'], 'value':value} )
+    assigment_prototype['value'] = self.expression()
+
+    if( array ):
+        assigment_prototype['index'] = array['index']
+        return self.semantic.assigment( assigment_prototype )
+    else:
+        return self.semantic.assigment( assigment_prototype )
+
+def thereIsArrayAssigment(self, id):
+    if( self.token['type'] == 'corchete_a' ):
+        return self.arrayAccess( id )
 
 def functionCall(self):
     func_call = {}
@@ -353,23 +375,18 @@ def para(self):
                     'column':self.lexer.source.getColumIndex()
                 }
     var_debt, para = self.semantic.paraInit(para)
-    were_vars_created = None
     while( True ):
         self.logger.info("<PARA> evaluating iteration condition.")
         if( self.semantic.paraIter(para) ):
             self.logger.info("<PARA> Iteration")
             self.logger.debug("Jumping to:"+str(body_start['row'])+','+str(body_start['column']))
             self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
-            if(were_vars_created is None):
-                were_vars_created = self.body(errase_created_vars=False)
-            else:
-                self.body(errase_created_vars=False)
+            self.nextToken()
+            var_debt += self.body(errase_created_vars=False)
         else:
             self.matchClosingTag( )
             break
 
-    if( were_vars_created is not None ):
-        var_debt += were_vars_created
     self.symbols_table.popVar( var_debt )
     self.logger.debug( "Current source coordinates:\t"+self.lexer.source.getCoordinates() )
     self.match( ('reserved_word', 'FIN') )
