@@ -105,23 +105,23 @@ def arrayAccess(self, id):
 
 def expression(self):
     self.logger.info("Matching for expression.")
-    right = self.typeId()
-    right = right['value'] if 'id' in right else right
+    left = self.typeId()
+    left = left['value'] if 'id' in left else left
     complement = self.complement()
     if(complement is not None):
-        complement['right'] = right
+        complement['left'] = left
         result = self.semantic.solveExpr( complement )
     else:
-        result = right
+        result = left
     return result
 
 def complement(self):
     if(self.token['type'] in ['mas', 'menos', 'mult', 'div'] or self.token['lexeme'] == 'MOD'):
         line = self.token['line']
         operation = self.aritmeticOperator()
-        left = self.typeId()
-        left = left['value'] if 'id' in left else left
-        return {'operator':operation, 'left':left, 'line':line}
+        right = self.typeId()
+        right = right['value'] if 'id' in right else right
+        return {'operator':operation, 'right':right, 'line':line}
 
 def aritmeticOperator(self):
     operator = self.token
@@ -171,7 +171,6 @@ def progStructure(self):
     self.areThereArray()
     self.match( ('reserved_word', 'INICIO') )
     self.body()
-    print('\n'+str(self.symbols_table.table)+'\n')
     self.match( ('reserved_word', 'FIN') )
 
 def name(self):
@@ -238,7 +237,7 @@ def moreArray(self):
 #0_ARREGLO
 
 def body(self, errase_created_vars=True):
-    self.logger.info("Body...")
+    self.logger.info( f"Body... [errase_created_vars:{errase_created_vars}]" )
 
     created_vars = self.instruction( errase_created_vars )
 
@@ -260,9 +259,9 @@ def instruction(self, errase_created_vars):
         if(self.token['lexeme'] == 'SI'):
             created_vars = self.si(errase_created_vars)
         elif(self.token['lexeme'] == 'PARA'):
-            self.para()
+            self.para(errase_created_vars)
         elif(self.token['lexeme'] == 'MIENTRAS'):
-            self.mientras()
+            self.mientras(errase_created_vars)
         else:
             error_msg = "Expecting one of the next reserved word: SI, PARA or MIENTRAS"
             error_msg += f" Found: {self.token['lexeme']}"
@@ -356,7 +355,7 @@ def sino(self, errase_created_vars):
     else:
         self.matchClosingTag( )
 
-def para(self):
+def para(self, errase_created_vars):
     self.logger.info('<PARA> call')
     para = {}
     self.match( ('reserved_word', 'PARA') )
@@ -387,7 +386,8 @@ def para(self):
             self.matchClosingTag( )
             break
 
-    self.symbols_table.popVar( var_debt )
+    if( errase_created_vars ):
+        self.symbols_table.popVar( var_debt )
     self.logger.debug( "Current source coordinates:\t"+self.lexer.source.getCoordinates() )
     self.match( ('reserved_word', 'FIN') )
     self.logger.debug("Ended PARA:\t"+str(para))
@@ -419,14 +419,23 @@ def stepType(self):
 
     return step
 
-def mientras(self):
+def mientras(self, errase_created_vars):
     self.logger.info("<MIENTRAS> call")
     self.match( ('reserved_word', 'MIENTRAS') )
     condition = self.conditionalOperation(solve=False)
-    self.match( ('reserved_word', 'HACER') )
-    body_start = {'row':self.lexer.source.getRowIndex(), 'column':self.lexer.source.getColumIndex()}
+    self.match( ('reserved_word', 'HACER'), dry=True )
+
+    body_start = {
+                    'row':self.lexer.source.getRowIndex(),
+                    'column':self.lexer.source.getColumIndex()
+                }
+    var_debt = 0
     while( self.semantic.resolveCondition(condition) ):
         self.logger.debug("<MIENTRAS> iteration")
         self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
-        self.body()
+        self.nextToken()
+        var_debt += self.body(errase_created_vars=False)
+
+    if( errase_created_vars ):
+        self.symbols_table.popVar( var_debt )
     self.match( ('reserved_word', 'FIN') )

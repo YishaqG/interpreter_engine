@@ -78,4 +78,4 @@ if __name__ == "__main__":
     else:
         inter = interpreter.Interpreter( CONFIG['LANGUAGE'][CONFIG['DEFAULT_LANGUAGE']] )
         with open( args.input, 'r' ) as f:
-            inter.run( f.read() )
+            inter.run( f.read(), True if args.debug or args.info else False )

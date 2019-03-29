@@ -59,16 +59,30 @@ class Interpreter(object):
         with open(self.CONFIG['SAVE_AS'], 'w') as outfile:
             json.dump(config, outfile)
 
-    def run(self, source):
+    def run(self, source, show_exception=True):
         self.lexer.setSource( Container.Container(source) )
-        try:
-            self.sintaxer.nextToken()
-            self.sintaxer.progStructure()
-        except Container.EndOfFileException as ex:
-            self.logger.debug("End of file.")
-        finally:
-            self.logger.debug("Reseting interpreter configuration.")
-            self.resetConfig()
+
+        if( show_exception ):
+            try:
+                self.sintaxer.nextToken()
+                self.sintaxer.progStructure()
+            except Container.EndOfFileException as ex:
+                self.logger.debug("End of file.")
+            finally:
+                self.logger.debug("Reseting interpreter configuration.")
+                self.resetConfig()
+        else:
+            try:
+                self.sintaxer.nextToken()
+                self.sintaxer.progStructure()
+            except Container.EndOfFileException as ex:
+                self.logger.debug("End of file.")
+            except Exception as ex:
+                pass
+            finally:
+                self.logger.debug("Reseting interpreter configuration.")
+                self.resetConfig()
+
 
         self.logger.debug("="*80)
         self.logger.info("Analysis ended.")
