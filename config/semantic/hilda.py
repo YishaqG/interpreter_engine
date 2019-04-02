@@ -1,4 +1,5 @@
 def buildInFunctions(self, function):
+    self.logger.info(f"<Build-inFunction> prototype:\t{function}")
     if( function['name'].lower() == 'escribe' ):
         if( len(function['parameters']) == 1 ):
             to_print = function['parameters'][0]
@@ -9,7 +10,7 @@ def buildInFunctions(self, function):
             self.error( error_msg )
     elif( function['name'].lower() == 'lee' ):
         if( (len(function['parameters']) > 1) and not ('id' in function['parameters'][0]) ):
-            error_msg = "Invalid calling to functions <lee>."
+            error_msg = "Invalid call to functions <lee>."
             self.error( error_msg )
 
         const_var = self.symbols_table.getConst( function['parameters'][0]['id'] )
@@ -133,12 +134,15 @@ def solveExpr(self, expr):
 def resolveCondition(self, condition):
     self.logger.debug("Condition to solve:\t"+str(condition))
     if( condition['left']['type'] == condition['right']['type'] ):
+        if( condition['left']['type'] == 'caracter' ):
+            condition['left']['value'] = '"'+condition['left']['value']+'"'
+            condition['right']['value'] = '"'+condition['right']['value']+'"'
         result = eval(
-                condition['left']['value']+
+                str(condition['left']['value'])+
                 ' ' +
                 condition['operator']['lexeme']+
                 ' ' +
-                condition['right']['value']
+                str(condition['right']['value'])
             )
         if('negate' in condition):
             return eval('not '+str(result))
@@ -189,7 +193,7 @@ def assigment(self, assigment):
         error_msg = "Unmutable variable: {0}".format( assigment['id'] )
         self.error( error_msg )
 
-    var_found = self.symbols_table.getId(assigment['id'])
+    var_found = self.symbols_table.getId( assigment['id'] )
     if( var_found is not None ):
         self.logger.debug("Var found:"+str(var_found))
         type = var_found['type'] if not var_found['type'] == 'array' else var_found['value']['type']
@@ -215,9 +219,10 @@ def assigment(self, assigment):
 def paraInit(self, para):
     self.logger.info("<PARA>:Init:\t"+str(para))
     exist = 0
+    para['step'] = para['step']['type']+para['step']['value']['value']
     if( 'value' in para['ctrl_var'] ):
         if( para['ctrl_var']['value']['type'] == 'entero'):
-            para['ctrl_var']['value']['value'] = str(eval( para['ctrl_var']['value']['value']+"- 1" ))
+            para['ctrl_var']['value']['value'] = str(eval( para['ctrl_var']['value']['value']+'- '+para['step'] ))
             exist = self.assigment( para['ctrl_var'] )
         else:
             error_msg = "Ctrl variable most be type >entero<. Not: {0}".format(para['ctrl_var'])
@@ -230,7 +235,6 @@ def paraInit(self, para):
         self.error(error_msg)
     para['to'] = para['to']['value']['value']
 
-    para['step'] = para['step']['type']+para['step']['value']['value']
 
     return exist, para
 
@@ -241,7 +245,7 @@ def paraIter(self, para):
 
     debug_msg = f"<PARA> limit checking. Current:{var['value']} To:{para['to']}"
     self.logger.debug(debug_msg)
-    if( int(var['value']) < int(para['to']) ):
+    if( int(var['value']) != int(para['to']) ):
         var['value'] = str( eval(var['value']+' + '+para['step']) )
         self.symbols_table.addId(
                 para['ctrl_var']['id'],

@@ -102,7 +102,7 @@ class SymbolsTable(object):
         vars = list( self.table['identifiers'] )
         popped = 0
         for id in reversed(vars):
-            if(popped >= ammount_to_pop):
+            if(popped > ammount_to_pop-1):
                 break
 
             del self.table['identifiers'][id]

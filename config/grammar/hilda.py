@@ -271,9 +271,10 @@ def instruction(self, errase_created_vars):
         self.error("Unknown instruction:\t"+str(self.token['lexeme']))
 
 
-    self.logger.info("Instruction checking ended...")
     created_vars = 0 if created_vars is None else created_vars
-    return created_vars+self.moreInstruction(errase_created_vars)
+    created_vars = created_vars + self.moreInstruction(errase_created_vars)
+    self.logger.info("Instruction checking ended...")
+    return created_vars
 
 def moreInstruction(self, errase_created_vars):
     if( self.token['type'] in ['function', 'id'] or self.token['lexeme'] in ['PARA', 'MIENTRAS', 'SI']):
@@ -292,9 +293,8 @@ def asignacion(self):
 
     if( array ):
         assigment_prototype['index'] = array['index']
-        return self.semantic.assigment( assigment_prototype )
-    else:
-        return self.semantic.assigment( assigment_prototype )
+
+    return self.semantic.assigment( assigment_prototype )
 
 def thereIsArrayAssigment(self, id):
     if( self.token['type'] == 'corchete_a' ):
@@ -375,20 +375,21 @@ def para(self, errase_created_vars):
     while( True ):
         self.logger.info("<PARA> evaluating iteration condition.")
         if( self.semantic.paraIter(para) ):
-            self.logger.info("<PARA> Iteration")
-            self.logger.debug("Jumping to:"+str(body_start['row'])+','+str(body_start['column']))
+            self.logger.info("<PARA> iteration")
+            self.logger.debug("<PARA> jumping to:"+str(body_start['row'])+','+str(body_start['column']))
             self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
             self.nextToken()
-            var_debt += self.body(errase_created_vars=False)
+            var_debt += self.body(errase_created_vars=True)
         else:
             self.matchClosingTag( )
             break
 
     if( errase_created_vars ):
+        self.logger.info(f"<PARA> variables to pop: {var_debt}")
         self.symbols_table.popVar( var_debt )
-    self.logger.debug( "Current source coordinates:\t"+self.lexer.source.getCoordinates() )
+    self.logger.debug( "<PARA> current source coordinates:\t"+self.lexer.source.getCoordinates() )
     self.match( ('reserved_word', 'FIN') )
-    self.logger.debug("Ended PARA:\t"+str(para))
+    self.logger.debug("<PARA> end:\t"+str(para))
 
 def ctrlVariable(self):
     ctrl_var = {'id':self.token['lexeme']}
@@ -429,7 +430,7 @@ def mientras(self, errase_created_vars):
         self.logger.debug("<MIENTRAS> iteration")
         self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
         self.nextToken()
-        var_debt += self.body(errase_created_vars=False)
+        var_debt += self.body(errase_created_vars=True)
 
     if( errase_created_vars ):
         self.symbols_table.popVar( var_debt )
