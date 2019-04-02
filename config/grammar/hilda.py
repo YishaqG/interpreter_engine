@@ -1,7 +1,6 @@
 def grammar():
     return [
         'matchClosingTag',
-        'valueType',
         'typeId',
         'variableOperation',
         'method',
@@ -61,25 +60,21 @@ def matchClosingTag(self):
 
     self.logger.info("Ended search for closing tag...")
 
-def valueType(self):
-    value = self.token
-    self.match( ['entero', 'caracter'] )
-    return {'type':value['type'], 'value':value['lexeme']}
-
 def typeId(self):
-    if(self.token['type'] in ['entero', 'caracter']):
-        value = self.valueType()
-        self.logger.debug("Getted type:\t"+str(value))
-    elif(self.token['type'] == 'id'):
-        id = self.token
-        self.match('id')
-        value = self.variableOperation( id )
-        if(value is None):
-            value = self.semantic.getVarValue( {'id':id['lexeme']} )
-            value = {'id':id['lexeme'], 'value':value}
-        self.logger.debug("Getted id and value:\t"+str(value))
+    raw_token = self.token
+    self.match( ['entero', 'caracter', 'id'] )
 
-    return value
+    if( raw_token['type'] in ['entero', 'caracter'] ):
+        self.logger.debug("Getted type:\t"+str(raw_token))
+        token = {'type':raw_token['type'], 'value':raw_token['lexeme']}
+    elif( raw_token['type'] == 'id' ):
+        token = self.variableOperation( raw_token )
+        if( token is None ):
+            value = self.semantic.getVarValue( {'id':raw_token['lexeme']} )
+            token = {'id':raw_token['lexeme'], 'value':value}
+            self.logger.debug("Getted id and value:\t"+str(value))
+
+    return token
 
 def variableOperation(self, id):
     self.logger.info("Matching for variable operation.")
@@ -186,10 +181,12 @@ def areThereConst(self):
 def defConst(self):
     var_def = {}
     self.logger.info("Defining constant.")
-    var_def['id'] = self.token['lexeme']
-    self.match('id')
+    var_def['id'] = self.match('id')['lexeme']
     self.match('asigna')
-    var_def['value'] = self.valueType()
+
+    raw_token = self.match( ['entero', 'caracter'] )
+    var_def['value'] = {'type':raw_token['type'], 'value':raw_token['lexeme']}
+
     self.logger.debug(var_def)
     self.semantic.constDef( var_def )
     self.moreConst()
@@ -220,7 +217,8 @@ def defArray(self):
 
 def arrayElement(self):
     value = []
-    value.append( self.valueType() )
+    raw_token = self.match( ['entero', 'caracter'] )
+    value.append( {'type':raw_token['type'], 'value':raw_token['lexeme']} )
     if(self.token['type'] == 'coma'):
         value.extend( self.moreArrayElement() )
 
@@ -407,13 +405,10 @@ def ctrlAssigment(self):
         return self.expression()
 
 def stepType(self):
-    step = {}
-    step['type'] = self.token['lexeme']
-    if(self.token['type'] == 'mas'):
-        self.match('mas')
-    elif(self.token['type'] == 'menos'):
-        self.match('menos')
+    token = self.match( ['mas', 'menos'] )
 
+    step = {}
+    step['type'] = token['lexeme']
     step['value'] = {'type':self.token['type'], 'value':self.token['lexeme']}
     self.match('entero')
 
