@@ -149,10 +149,10 @@ def conditionalOperation(self, solve=True):
         condition['negate'] = True
 
     token = self.typeId()
-    condition['left'] = token['value'] if 'value' in token else token
+    condition['left'] = token['value'] if 'value' in token and 'value' in token['value'] else token
     condition['operator'] = self.conditionalOperator()
     token = self.typeId()
-    condition['right'] = token['value'] if 'value' in token else token
+    condition['right'] = token['value'] if 'value' in token and 'value' in token['value'] else token
 
     if( solve ):
         return self.semantic.resolveCondition( condition )
