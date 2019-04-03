@@ -89,14 +89,14 @@ def method(self, id):
     method = self.token
     self.match('id')
     value = self.semantic.getVarValue( {'id':id['lexeme'], 'method':method} )
-    return {'id':id, 'value':value}
+    return {'id':id['lexeme'], 'method':method, 'value':value}
 
 def arrayAccess(self, id):
     self.match('corchete_a')
     index = self.expression()
     value = self.semantic.getVarValue( {'id':id['lexeme'], 'index':index} )
     self.match('corchete_c')
-    return {'id':id, 'index':index, 'value':value}
+    return {'id':id['lexeme'], 'index':index, 'value':value}
 
 def expression(self):
     self.logger.info("Matching for expression.")

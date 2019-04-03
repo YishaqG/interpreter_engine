@@ -246,7 +246,7 @@ def paraIter(self, para):
     self.logger.debug(debug_msg)
 
     if( 'id' in para['to'] ):
-        to_var = self.symbols_table.getId( para['to']['id'] )['value']
+        to_var = self.getVarValue( para['to'] )['value']
     else:
         to_var = para['to']['value']
 
