@@ -71,7 +71,7 @@ def typeId(self):
         token = self.variableOperation( raw_token )
         if( token is None ):
             value = self.semantic.getVarValue( {'id':raw_token['lexeme']} )
-            token = {'id':raw_token['lexeme'], 'value':value}
+            token = {'id':raw_token['lexeme'], 'value':dict(value)}
             self.logger.debug("Getted id and value:\t"+str(value))
 
     return token
@@ -148,7 +148,6 @@ def conditionalOperation(self, solve=True):
     condition['operator'] = self.conditionalOperator()
     token = self.typeId()
     condition['right'] = token['value'] if 'value' in token and 'value' in token['value'] else token
-
     if( solve ):
         return self.semantic.resolveCondition( condition )
     else:
@@ -234,19 +233,19 @@ def moreArray(self):
         return self.defArray()
 #0_ARREGLO
 
-def body(self, errase_created_vars=True):
-    self.logger.info( f"Body... [errase_created_vars:{errase_created_vars}]" )
+def body(self, erase_created_vars=True):
+    self.logger.info( f"Body... [erase_created_vars:{erase_created_vars}]" )
 
-    created_vars = self.instruction( errase_created_vars )
+    created_vars = self.instruction( erase_created_vars )
 
-    if( errase_created_vars ):
+    if( erase_created_vars ):
         self.symbols_table.popVar(created_vars)
         created_vars = 0
 
     self.logger.info("Body end. Created variables: "+str(created_vars))
     return created_vars
 
-def instruction(self, errase_created_vars):
+def instruction(self, erase_created_vars):
     self.logger.info("Instruction checking...")
 
     created_vars = 0
@@ -255,11 +254,11 @@ def instruction(self, errase_created_vars):
         self.match('punto_coma')
     elif(self.token['type'] == 'reserved_word'):
         if(self.token['lexeme'] == 'SI'):
-            created_vars = self.si(errase_created_vars)
+            created_vars = self.si(erase_created_vars)
         elif(self.token['lexeme'] == 'PARA'):
-            self.para(errase_created_vars)
+            self.para(erase_created_vars)
         elif(self.token['lexeme'] == 'MIENTRAS'):
-            self.mientras(errase_created_vars)
+            self.mientras(erase_created_vars)
         else:
             error_msg = "Expecting one of the next reserved word: SI, PARA or MIENTRAS"
             error_msg += f" Found: {self.token['lexeme']}"
@@ -272,13 +271,13 @@ def instruction(self, errase_created_vars):
 
 
     created_vars = 0 if created_vars is None else created_vars
-    created_vars = created_vars + self.moreInstruction(errase_created_vars)
+    created_vars = created_vars + self.moreInstruction(erase_created_vars)
     self.logger.info("Instruction checking ended...")
     return created_vars
 
-def moreInstruction(self, errase_created_vars):
+def moreInstruction(self, erase_created_vars):
     if( self.token['type'] in ['function', 'id'] or self.token['lexeme'] in ['PARA', 'MIENTRAS', 'SI']):
-        return self.instruction(errase_created_vars)
+        return self.instruction(erase_created_vars)
 
     return 0
 
@@ -329,7 +328,7 @@ def moreParameter(self):
         self.match('coma')
         return self.parameter()
 
-def si(self, errase_created_vars):
+def si(self, erase_created_vars):
     self.logger.info("<SI> call")
     self.match( ('reserved_word', 'SI') )
     self.match( 'parentesis_a' )
@@ -337,23 +336,45 @@ def si(self, errase_created_vars):
     self.match( 'parentesis_c' )
     self.match( ('reserved_word', 'ENTONCES') )
     if( condition ):
-        created_vars = self.body( errase_created_vars )
+        created_vars = self.body( erase_created_vars )
     else:
-        created_vars = self.sino( errase_created_vars )
+        self.logger.info("Searching for <NOSI> tag...")
+        self.logger.info("Starting at token:\t"+str(self.token))
+        open = 1
+        while( True ):
+            if( self.token['lexeme']  in ['SI', 'PARA', 'MIENTRAS'] ):
+                open += 1
+            elif( self.token['lexeme']  == 'NOSI' and open == 1 ):
+                    break
+            elif( self.token['lexeme']  == 'FIN' ):
+                open -= 1
+                if( open == 0 ):
+                    break
+
+            try:
+                self.nextToken()
+            except EndOfFileException as ex:
+                error_msg = "Mismatching closing reserved word,"
+                error_msg += " <FIN> not found."
+                self.error(error_msg)
+
+            self.logger.info("Ended search for closing tag...")
+        created_vars = self.sino( erase_created_vars )
+    self.matchClosingTag()
     self.match( ('reserved_word', 'FIN') )
 
     return created_vars
 
-def sino(self, errase_created_vars):
-    self.logger.info("Matching <SINO>")
-    if( self.token['lexeme'] == 'SINO' ):
-        self.logger.info("<SINO> call")
-        self.match( ('reserved_word', 'SINO') )
-        return self.body(errase_created_vars)
+def sino(self, erase_created_vars):
+    self.logger.info("Matching <NOSI>")
+    if( self.token['lexeme'] == 'NOSI' ):
+        self.logger.info("<NOSI> call")
+        self.match( ('reserved_word', 'NOSI') )
+        return self.body(erase_created_vars)
     else:
         self.matchClosingTag( )
 
-def para(self, errase_created_vars):
+def para(self, erase_created_vars):
     self.logger.info('<PARA> call')
     para = {}
     self.match( ('reserved_word', 'PARA') )
@@ -379,12 +400,12 @@ def para(self, errase_created_vars):
             self.logger.debug("<PARA> jumping to:"+str(body_start['row'])+','+str(body_start['column']))
             self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
             self.nextToken()
-            var_debt += self.body(errase_created_vars=True)
+            var_debt += self.body(erase_created_vars=True)
         else:
             self.matchClosingTag( )
             break
 
-    if( errase_created_vars ):
+    if( erase_created_vars ):
         self.logger.info(f"<PARA> variables to pop: {var_debt}")
         self.symbols_table.popVar( var_debt )
     self.logger.debug( "<PARA> current source coordinates:\t"+self.lexer.source.getCoordinates() )
@@ -415,7 +436,7 @@ def stepType(self):
 
     return step
 
-def mientras(self, errase_created_vars):
+def mientras(self, erase_created_vars):
     self.logger.info("<MIENTRAS> call")
     self.match( ('reserved_word', 'MIENTRAS') )
     condition = self.conditionalOperation(solve=False)
@@ -430,8 +451,8 @@ def mientras(self, errase_created_vars):
         self.logger.debug("<MIENTRAS> iteration")
         self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
         self.nextToken()
-        var_debt += self.body(errase_created_vars=True)
+        var_debt += self.body(erase_created_vars=True)
 
-    if( errase_created_vars ):
+    if( erase_created_vars ):
         self.symbols_table.popVar( var_debt )
     self.match( ('reserved_word', 'FIN') )

@@ -30,7 +30,7 @@ def buildInFunctions(self, function):
             value = {'type':'entero', 'value': str(value)}
         elif( value.isalpha() ):
             if( len(value) == 1):
-                value = {'type':'caracter', 'value': str(value)}
+                value = {'type':'caracter', 'value': value}
             else:
                 self.error("<Cadenas> are't supported.")
         else:
