@@ -133,6 +133,11 @@ def solveExpr(self, expr):
 
 def resolveCondition(self, condition):
     self.logger.debug("Condition to solve:\t"+str(condition))
+    if('id' in condition['left'] ):
+        condition['left'] = self.getVarValue( condition['left'] )
+    if('id' in condition['right'] ):
+        condition['right'] = self.getVarValue( condition['right'] )
+
     if( condition['left']['type'] == condition['right']['type'] ):
         if( condition['left']['type'] == 'caracter' ):
             condition['left']['value'] = '"'+condition['left']['value']+'"'

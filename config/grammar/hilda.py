@@ -144,10 +144,10 @@ def conditionalOperation(self, solve=True):
         condition['negate'] = True
 
     token = self.typeId()
-    condition['left'] = token['value'] if 'value' in token and 'value' in token['value'] else token
+    condition['left'] = token
     condition['operator'] = self.conditionalOperator()
     token = self.typeId()
-    condition['right'] = token['value'] if 'value' in token and 'value' in token['value'] else token
+    condition['right'] = token
     if( solve ):
         return self.semantic.resolveCondition( condition )
     else:
@@ -449,7 +449,7 @@ def mientras(self, erase_created_vars):
                     'column':self.lexer.source.getColumIndex()
                 }
     var_debt = 0
-    while( self.semantic.resolveCondition(condition) ):
+    while( self.semantic.resolveCondition( dict(condition) ) ):
         self.logger.debug("<MIENTRAS> iteration")
         self.lexer.source.setCoordinates(body_start['row'], body_start['column'])
         self.nextToken()
