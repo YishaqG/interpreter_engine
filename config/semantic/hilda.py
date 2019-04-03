@@ -222,7 +222,7 @@ def paraInit(self, para):
     para['step'] = para['step']['type']+para['step']['value']['value']
     if( 'value' in para['ctrl_var'] ):
         if( para['ctrl_var']['value']['type'] == 'entero'):
-            para['ctrl_var']['value']['value'] = str(eval( para['ctrl_var']['value']['value']+'- '+para['step'] ))
+            para['ctrl_var']['value']['value'] = str(eval( str(para['ctrl_var']['value']['value'])+'- '+para['step'] ))
             exist = self.assigment( para['ctrl_var'] )
         else:
             error_msg = "Ctrl variable most be type >entero<. Not: {0}".format(para['ctrl_var'])
@@ -230,11 +230,10 @@ def paraInit(self, para):
 
     para['ctrl_var'] = {'id':para['ctrl_var']['id']}
 
-    if( para['to']['value']['type'] != 'entero' ):
+    to_var = para['to'] if not 'id' in para['to'] else para['to']['value']
+    if( to_var['type'] != 'entero' ):
         error_msg = "Limit variable most be type >entero<. Not: {0}".format(para['to'])
         self.error(error_msg)
-    para['to'] = para['to']['value']['value']
-
 
     return exist, para
 
@@ -245,7 +244,13 @@ def paraIter(self, para):
 
     debug_msg = f"<PARA> limit checking. Current:{var['value']} To:{para['to']}"
     self.logger.debug(debug_msg)
-    if( int(var['value']) != int(para['to']) ):
+
+    if( 'id' in para['to'] ):
+        to_var = self.symbols_table.getId( para['to']['id'] )['value']
+    else:
+        to_var = para['to']['value']
+
+    if( int(var['value']) != int(to_var) ):
         var['value'] = str( eval(var['value']+' + '+para['step']) )
         self.symbols_table.addId(
                 para['ctrl_var']['id'],
