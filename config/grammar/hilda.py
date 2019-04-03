@@ -439,7 +439,9 @@ def stepType(self):
 def mientras(self, erase_created_vars):
     self.logger.info("<MIENTRAS> call")
     self.match( ('reserved_word', 'MIENTRAS') )
+    self.match( 'parentesis_a' )
     condition = self.conditionalOperation(solve=False)
+    self.match( 'parentesis_c' )
     self.match( ('reserved_word', 'HACER'), dry=True )
 
     body_start = {
