@@ -105,6 +105,7 @@ class SymbolsTable(object):
             if(popped > ammount_to_pop-1):
                 break
 
+            self.logger.info( f"DELETE:VAR:"+str({'id':id, 'value':self.table['identifiers'][id]}) )
             del self.table['identifiers'][id]
             popped += 1
 

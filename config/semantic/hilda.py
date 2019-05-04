@@ -160,11 +160,13 @@ def resolveCondition(self, condition):
 
 def arrayDef(self, var_def):
     if( self.symbols_table.getId( var_def['id'] ) is None ):
+        var_def['value'] = self.shapeArray(var_def['value'])
         self.symbols_table.addId(
             var_def['id'],
             'array',
-            self.shapeArray(var_def['value'])
-            )
+            var_def['value']
+        )
+        self.logger.info(f"CREATE:ARRAY:{var_def}")
     else:
         error_msg = "Previous declaration of array: {0}".format(var_def['id'])
         self.error(error_msg)
@@ -188,6 +190,7 @@ def constDef(self, var_def):
             var_def['value']['type'],
             var_def['value']['value']
             )
+        self.logger.info(f"CREATE:CONST:{var_def}")
     else:
         error_msg = "Previous declaration of constant: {0}".format(var_def['id'])
         self.error(error_msg)
@@ -211,7 +214,11 @@ def assigment(self, assigment):
             self.logger.debug("<ASIGNACION>:Array position.")
             var_found['value']['value'][ int(assigment['index']['value']) ] = assigment['value']['value']
             self.logger.debug(f"<ASIGNACION>:Value assigned={var_found['value']['value'][ int(assigment['index']['value']) ]}")
+            self.logger.info("UPDATE:ARRAY:"+str({'id':assigment['id'], 'value':self.symbols_table.getId( assigment['id'] )['value'] }) )
             return 0
+        self.logger.info(f"UPDATE:VAR:{assigment}")
+    else:
+        self.logger.info(f"CREATE:VAR:{assigment}")
 
     self.symbols_table.addId(
         assigment['id'],
